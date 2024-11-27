@@ -1,0 +1,59 @@
+pipeline {
+    agent any
+    stages {
+        stage('Install Dependencies') {
+            steps {
+                script {
+                    
+                    sh '''
+                    sudo apt-get update
+                    sudo apt-get install -y nginx
+                    '''
+                }
+            }
+        }
+        stage('Configure Nginx') {
+            steps {
+                script {
+                    
+                    sh '''
+                    echo "server {
+                        listen 80;
+                        server_name localhost;
+
+                        location / {
+                            root /usr/share/nginx/html;
+                            index index.html;
+                        }
+                    }" | sudo tee /etc/nginx/sites-available/default
+                    sudo nginx -t
+                    '''
+                }
+            }
+        }
+        stage('Start Nginx') {
+            steps {
+                script {
+                   
+                    sh '''
+                    sudo systemctl start nginx
+                    sudo systemctl enable nginx
+                    '''
+                }
+            }
+        }
+        stage('Verify Nginx') {
+            steps {
+                script {
+                    
+                    sh 'curl -I http://localhost'
+                }
+            }
+        }
+    }
+    post {
+        always {
+            echo 'Pipeline complete.'
+        }
+    }
+}
